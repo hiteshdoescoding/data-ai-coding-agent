@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 
 def clean_rows(rows, branch, eur_rate=None):
@@ -77,7 +78,21 @@ def parse_price_to_pence(value, unit):
     Raise ValueError if the value is not a valid price (including fractions
     of a penny, e.g. "3.405" pounds or "340.5" pence).
     """
-    raise NotImplementedError
+    try:
+        amount = Decimal(value.strip())
+    except InvalidOperation:
+        raise ValueError(f"not a valid price: {value!r}")
+    if not amount.is_finite():
+        raise ValueError(f"not a valid price: {value!r}")
+
+    if unit == "pounds":
+        amount *= 100
+    elif unit != "pence":
+        raise ValueError(f"unknown unit: {unit!r}")
+
+    if amount != amount.to_integral_value():
+        raise ValueError(f"fraction of a penny: {value!r}")
+    return int(amount)
 
 
 def parse_till_timestamp(value):
