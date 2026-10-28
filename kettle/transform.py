@@ -64,7 +64,9 @@ def format_pence(pence):
     >>> format_pence(-120)
     '-£1.20'
     """
-    raise NotImplementedError
+    sign = "-" if pence < 0 else ""
+    pounds, pence = divmod(abs(pence), 100)
+    return f"{sign}£{pounds}.{pence:02d}"
 
 
 def parse_price_to_pence(value, unit):
@@ -85,7 +87,11 @@ def parse_till_timestamp(value):
     ("2026-09-14T08:15:00"). Surrounding whitespace is ignored.
     Raise ValueError for anything else.
     """
-    raise NotImplementedError
+    value = value.strip()
+    try:
+        return datetime.strptime(value, "%d/%m/%Y %H:%M")
+    except ValueError:
+        return datetime.fromisoformat(value)
 
 
 def normalise_product_name(raw_name, products):
@@ -98,4 +104,11 @@ def normalise_product_name(raw_name, products):
     >>> normalise_product_name(" flat-white ", products)
     'Flat White'
     """
-    raise NotImplementedError
+    def key(name):
+        return " ".join(name.replace("-", " ").lower().split())
+
+    wanted = key(raw_name)
+    for product in products:
+        if wanted in [key(product["name"])] + [key(a) for a in product["aliases"]]:
+            return product["name"]
+    return None
